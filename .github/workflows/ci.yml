@@ -56,8 +56,12 @@ jobs:
           ESCAPED_BODY=$(echo "$BODY" | jq -sRr @json)
 
           PR_NUMBER=$(jq -r .pull_request.number "$GITHUB_EVENT_PATH")
+
+          PAYLOAD=$(jq -n \
+            --arg body "### ⚠️ Clang-format suggestions:\n\`\`\`diff\n$BODY\n\`\`\`" \
+            '{"body": $body}')
   
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                -H "Content-Type: application/json" \
-               -d "{\"body\": \"### ⚠️ Clang-format suggestions:\\n\`\`\`diff\\n$ESCAPED_BODY\\n\`\`\`\"}" \
+               -d "$PAYLOAD" \
                "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
