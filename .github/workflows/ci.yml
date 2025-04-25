@@ -13,7 +13,8 @@ jobs:
   test:
     name: Run Tests
     runs-on: ubuntu-latest
-
+    outputs:
+      outcome: ${{ job.status }}
     steps:
       - uses: actions/checkout@v3
 
@@ -43,11 +44,23 @@ jobs:
           path: build/**/test_results/*.xml
           reporter: jest-junit
           fail-on-error: 'true'
+        
+      - name: Get test summary
+        run: cp $GITHUB_STEP_SUMMARY ./test-summary.md
+        
+      - name: Upload test summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-summary-artifact
+          path: test-summary.md
+          retention-days: 1
 
   lint:
     name: Lint Check
     runs-on: ubuntu-latest
-
+    outputs:
+      outcome: ${{ job.status }}
     steps:
       - uses: actions/checkout@v3
 
@@ -66,7 +79,39 @@ jobs:
           else
             echo "Code is properly formatted."
           fi
-          
+      
+      - name: Upload lint diff artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-diff
+          path: clang_diff.txt
+          retention-days: 1
+
+  report:
+    name: Report Summary
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: always()
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download lint diff artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: lint-diff
+          path: ./
+
+      - name: Download test summary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: test-summary-artifact
+          path: ./
+      
+      - name: Debug
+        run: |
+          ls -lah
+
       - name: Comment on PR
         if: ${{ failure() }}
         uses: actions/github-script@v7
@@ -75,17 +120,25 @@ jobs:
           script: |
             const fs = require('fs');
             const diffContent = fs.readFileSync('clang_diff.txt', 'utf8');
+            const testContent = fs.readFileSync('test-summary.md', 'utf8');
             const issue_number = context.issue.number;
             
-            const commentBody = `## Linter suggestions
+            const commentBody = `## Code Analysis
+            ### Test output
+
+            ${testContent}
+            
+            ### Linter suggestions
 
             It looks like some code formatting issues were detected.
             Consistent formatting helps keep the codebase readable and maintainable.
 
             **Suggested changes:**
+            <details><summary>Expand for details</summary>
             \`\`\`diff
             ${diffContent}
             \`\`\`
+            </details>
             `;
             
             await github.rest.issues.createComment({
