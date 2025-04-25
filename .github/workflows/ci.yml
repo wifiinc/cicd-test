@@ -106,13 +106,13 @@ jobs:
             const testJobStatus = '${{ needs.test.outputs.outcome }}' === 'success';
             const lintJobStatus = '${{ needs.lint.outputs.outcome }}' === 'success';
 
-            const server_url = context.serverUrl; // e.g., https://github.com
+            const server_url = context.serverUrl;
             const repo_url = `${server_url}/${context.repo.owner}/${context.repo.repo}`;
-            const run_id = context.runId; // Get the current workflow run ID
+            const run_id = context.runId;
             const checks_url = `${repo_url}/pull/${issue_number}/checks`;
             const actions_run_url = `${repo_url}/actions/runs/${run_id}`;
             
-            const commentBody = `## Code Analysis
+            let commentBody = `## Code Analysis
             ### Test output
             
             [View Run Details](${actions_run_url})
