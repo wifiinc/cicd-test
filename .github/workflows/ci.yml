@@ -25,7 +25,6 @@ jobs:
         run: |
           cmake -S . -B build
           cmake --build build
-
       - name: Create directory for test results
         run: mkdir -p build/test_results
 
@@ -47,8 +46,8 @@ jobs:
         
       - name: Get test summary
         run: |
-          cat $GITHUB_STEP_SUMMARY
-          cp $GITHUB_STEP_SUMMARY ./test-summary.md
+          cat "$GITHUB_STEP_SUMMARY"
+          cp "$GITHUB_STEP_SUMMARY" ./test-summary.md
         
       - name: Upload test summary artifact
         if: always()
@@ -129,20 +128,21 @@ jobs:
             
             const commentBody = `## Code Analysis
             ### Test output
-
+            
             ${testContent}
             
             ### Linter suggestions
 
-            It looks like some code formatting issues were detected.
-            Consistent formatting helps keep the codebase readable and maintainable.
-
-            **Suggested changes:**
-            <details><summary>Expand for details</summary>
-            \`\`\`diff
-            ${diffContent}
-            \`\`\`
-            </details>
+            ${
+              lintJobStatus
+                ? "Code formatting looks good. No issues detected."
+                : `It looks like some code formatting issues were detected.
+                Consistent formatting helps keep the codebase readable and maintainable.
+                **Suggested changes:**
+                \`\`\`diff
+                ${diffContent}
+                \`\`\`
+            }
             `;
             
             await github.rest.issues.createComment({
