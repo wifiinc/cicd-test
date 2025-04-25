@@ -10,3 +10,7 @@ TEST(MathTest, Subtract) {
 }
 
 TEST(MathTest, SubtractNegative) { EXPECT_EQ(subtract(10, -3), 13); }
+
+TEST(MathTest, AddFail) {
+    EXPECT_EQ(add(1, 2), 69);
+}
