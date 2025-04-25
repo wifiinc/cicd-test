@@ -89,12 +89,6 @@ jobs:
         with:
           name: lint-diff
           path: ./
-
-      - name: Download test summary artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: test-summary-artifact
-          path: ./
       
       - name: Debug
         run: |
