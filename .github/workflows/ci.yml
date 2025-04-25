@@ -49,13 +49,15 @@ jobs:
             echo "Code is properly formatted."
           fi
           
-      - name: Comment on PR with formatting diff
+      - name: Comment on PR
         if: failure()
         run: |
-          BODY=$(jq -Rs . < clang_diff.txt)
-          PR_URL=$(jq -r .pull_request.url < "$GITHUB_EVENT_PATH")
+          BODY=$(cat clang_diff.txt)
+          ESCAPED_BODY=$(echo "$BODY" | jq -sRr @json)
+
+          PR_NUMBER=$(jq -r .pull_request.number "$GITHUB_EVENT_PATH")
   
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                -H "Content-Type: application/json" \
-               --data "{\"body\": \"### ⚠️ Clang-format suggestions:\n\`\`\`diff\n$BODY\n\`\`\`\"}" \
-               "$PR_URL/comments"
+               -d "{\"body\": \"### ⚠️ Clang-format suggestions:\\n\`\`\`diff\\n$ESCAPED_BODY\\n\`\`\`\"}" \
+               "https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments"
