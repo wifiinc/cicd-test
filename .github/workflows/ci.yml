@@ -123,6 +123,9 @@ jobs:
             const diffContent = fs.readFileSync('clang_diff.txt', 'utf8');
             const testContent = fs.readFileSync('test-summary.md', 'utf8');
             const issue_number = context.issue.number;
+
+            const testJobStatus = '${{ needs.test.outputs.outcome }}' === 'success';
+            const lintJobStatus = '${{ needs.lint.outputs.outcome }}' === 'success';
             
             const commentBody = `## Code Analysis
             ### Test output
