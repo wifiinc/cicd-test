@@ -6,6 +6,8 @@ on:
 
 permissions:
   pull-requests: write
+  contents: read
+  checks: write
 
 jobs:
   test:
@@ -23,8 +25,24 @@ jobs:
           cmake -S . -B build
           cmake --build build
 
+      - name: Create directory for test results
+        run: mkdir -p build/test_results
+
       - name: Run tests
+        # Assuming GoogleTest: Set GTEST_OUTPUT env var for ctest to pass down
+        # CTest runs tests, and GoogleTest executables will write XML reports
+        env:
+          GTEST_OUTPUT: xml:build/test_results/
         run: ctest --test-dir build --output-on-failure
+
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v2
+        if: success() || failure()
+        with:
+          name: Unit Test Results
+          path: build/test_results/*.xml
+          reporter: jest-junit
+          fail-on-error: 'true'
 
   lint:
     name: Lint Check
@@ -59,7 +77,12 @@ jobs:
             const diffContent = fs.readFileSync('clang_diff.txt', 'utf8');
             const issue_number = context.issue.number;
             
-            const commentBody = `### ⚠️ Clang-format suggestions:
+            const commentBody = `## Linter suggestions
+
+            It looks like some code formatting issues were detected.
+            Consistent formatting helps keep the codebase readable and maintainable.
+
+            **Suggested changes:**
             \`\`\`diff
             ${diffContent}
             \`\`\`
