@@ -33,7 +33,7 @@ jobs:
         # CTest runs tests, and GoogleTest executables will write XML reports
         env:
           GTEST_OUTPUT: xml:test_results/
-        run: ctest --test-dir build --output-on-failure --output-junit test_results/ctest_results.xml
+        run: ctest --test-dir build --output-on-failure
 
       - name: Publish Test Results
         uses: dorny/test-reporter@v2
