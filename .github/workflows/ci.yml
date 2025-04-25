@@ -34,5 +34,25 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y clang-format
 
       - name: Run clang-format check
+        id: check_lint
         run: |
-          find src include tests -name '*.cpp' -o -name '*.h' | xargs clang-format --dry-run --Werror
+          clang-format -i $(find src include tests -name '*.cpp' -o -name '*.h')
+          git diff > clang_diff.txt
+          
+          if [ -s clang_diff.txt ]; then
+            echo "Formatting issues found."
+            exit 1
+          else
+            echo "Code is properly formatted."
+          fi
+          
+      - name: Comment on PR with formatting diff
+        if: failure()
+        run: |
+          BODY=$(jq -Rs . < clang_diff.txt)
+          PR_URL=$(jq -r .pull_request.url < "$GITHUB_EVENT_PATH")
+  
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+               -H "Content-Type: application/json" \
+               --data "{\"body\": \"### ⚠️ Clang-format suggestions:\n\`\`\`diff\n$BODY\n\`\`\`\"}" \
+               "$PR_URL/comments"
