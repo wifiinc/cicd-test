@@ -32,15 +32,15 @@ jobs:
         # Assuming GoogleTest: Set GTEST_OUTPUT env var for ctest to pass down
         # CTest runs tests, and GoogleTest executables will write XML reports
         env:
-          GTEST_OUTPUT: xml:build/test_results/
-        run: ctest --test-dir build --output-on-failure
+          GTEST_OUTPUT: xml:test_results/
+        run: ctest --test-dir build --output-on-failure --output-junit test_results/ctest_results.xml
 
       - name: Publish Test Results
         uses: dorny/test-reporter@v2
         if: success() || failure()
         with:
           name: Unit Test Results
-          path: build/test_results/*.xml
+          path: build/**/test_results/*.xml
           reporter: jest-junit
           fail-on-error: 'true'
 
