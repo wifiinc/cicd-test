@@ -46,7 +46,9 @@ jobs:
           fail-on-error: 'true'
         
       - name: Get test summary
-        run: cp $GITHUB_STEP_SUMMARY ./test-summary.md
+        run: |
+          cat $GITHUB_STEP_SUMMARY
+          cp $GITHUB_STEP_SUMMARY ./test-summary.md
         
       - name: Upload test summary artifact
         if: always()
@@ -113,7 +115,6 @@ jobs:
           ls -lah
 
       - name: Comment on PR
-        if: ${{ failure() }}
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
