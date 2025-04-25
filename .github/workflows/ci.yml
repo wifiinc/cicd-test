@@ -50,7 +50,7 @@ jobs:
           fi
           
       - name: Comment on PR
-        if: failure()
+        if: ${{ failure() }}
         run: |
           BODY=$(cat clang_diff.txt)
           ESCAPED_BODY=$(echo "$BODY" | jq -sRr @json)
