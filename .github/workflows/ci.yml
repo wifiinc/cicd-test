@@ -43,19 +43,6 @@ jobs:
           path: build/**/test_results/*.xml
           reporter: jest-junit
           fail-on-error: 'true'
-        
-      - name: Get test summary
-        run: |
-          cat "$GITHUB_STEP_SUMMARY"
-          cp "$GITHUB_STEP_SUMMARY" ./test-summary.md
-        
-      - name: Upload test summary artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-summary-artifact
-          path: test-summary.md
-          retention-days: 1
 
   lint:
     name: Lint Check
@@ -120,30 +107,39 @@ jobs:
           script: |
             const fs = require('fs');
             const diffContent = fs.readFileSync('clang_diff.txt', 'utf8');
-            const testContent = fs.readFileSync('test-summary.md', 'utf8');
             const issue_number = context.issue.number;
 
             const testJobStatus = '${{ needs.test.outputs.outcome }}' === 'success';
             const lintJobStatus = '${{ needs.lint.outputs.outcome }}' === 'success';
+
+            const server_url = context.serverUrl; // e.g., https://github.com
+            const repo_url = `${server_url}/${context.repo.owner}/${context.repo.repo}`;
+            const run_id = context.runId; // Get the current workflow run ID
+            const checks_url = `${repo_url}/pull/${issue_number}/checks`;
+            const actions_run_url = `${repo_url}/actions/runs/${run_id}`;
             
             const commentBody = `## Code Analysis
             ### Test output
             
-            ${testContent}
+            [View Run Details](${actions_run_url})
             
             ### Linter suggestions
+            
+            `
 
-            ${
-              lintJobStatus
-                ? "Code formatting looks good. No issues detected."
-                : `It looks like some code formatting issues were detected.
-                Consistent formatting helps keep the codebase readable and maintainable.
-                **Suggested changes:**
-                \`\`\`diff
-                ${diffContent}
-                \`\`\`
+
+            if (!lintJobStatus) {
+              commentBody += `It looks like some code formatting issues were detected.
+              Consistent formatting helps keep the codebase readable and maintainable.
+
+              **Suggested changes:**
+              \`\`\`diff
+              ${diffContent}
+              \`\`\`
+              `;
+            } else {
+              commentBody += '✅ Linting passed.';
             }
-            `;
             
             await github.rest.issues.createComment({
               owner: context.repo.owner,
