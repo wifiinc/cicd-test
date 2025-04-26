@@ -55,5 +55,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/server-amd64/my_app
-            artifacts/server-arm64/my_app
+            artifacts/server-amd64/server
+            artifacts/server-arm64/server
