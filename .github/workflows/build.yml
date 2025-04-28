@@ -31,17 +31,23 @@ jobs:
           if [[ "${{ matrix.arch }}" == "arm64" ]]; then
             cmake .. -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
               -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
+              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+              -DENABLE_TESTS=OFF
           else
-            cmake ..
+            cmake .. -DENABLE_TESTS=OFF
           fi
           make
+
+      - name: Rename binary to server-${{ matrix.arch }}
+        run: | 
+          cd build
+          mv server server-${{ matrix.arch }}
 
       - name: Save binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: server-${{ matrix.arch }}
-          path: build/server
+          path: build/server-${{ matrix.arch }}
 
   release:
     name: Publish binaries
@@ -56,5 +62,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/server-amd64/server
-            artifacts/server-arm64/server
+            artifacts/server-amd64/server-amd64
+            artifacts/server-arm64/server-arm64
